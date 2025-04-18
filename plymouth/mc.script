@@ -50,7 +50,8 @@ fun text_height(text) {
 }
 
 fun text_height_adj() {
-	return text_height(global.textblank) / Window.GetHeight() / global.scale;
+    # 32 is magic thumbnail because "text_height(global.textblank)" was not stable
+	return 32 / Window.GetHeight() / global.scale;
 }
 
 # lets avoid autoscaling because it breaks things :)
@@ -77,7 +78,9 @@ background.sprite.SetOpacity(1);
 
 
 status = "normal";	
-status_message = []; 
+status_message = [];
+state_text = [];
+thumb_text = [];
 
 fun dialog_setup(text) {
 	box.image = Image("bar-" + scale  + ".png");
@@ -143,7 +146,7 @@ fun display_password_callback(prompt, bullets) {
 		dialog_setup(prompt);
 	} else {
 		delete_text(global.prompt.sprite);
-	        global.prompt.sprite = create_text(prompt, 0.5, box.y - text_height_adj()*2);
+	    global.prompt.sprite = create_text(prompt, 0.5, box.y - text_height_adj()*2);
 
 		dialog_opacity(1);
 	}
@@ -186,6 +189,31 @@ fun hide_message_callback(text) {
 	}
 }
 
+fun update_top_text() {
+    message = "This animation has bugged!";
+	if(Plymouth.GetMode() == "boot")
+		message = "Building terrain";
+	else if(Plymouth.GetMode() == "updates")
+		message = "Updating";
+	else if(Plymouth.GetMode() == "system-upgrade")
+		message = "Upgrading system";
+	else if(Plymouth.GetMode() == "firmware-upgrade") {
+		message = "Upgrading system firmware";
+		warning = create_text_color("DO NOT POWER OFF SYSTEM!", 0.5, 0.5+text_height_adj(), 1, 0, 0);
+	} else if(Plymouth.GetMode() == "system-reset") {
+		message = "Deleting world";
+        }
+
+    delete_text(global.state_text);
+    delete_text(global.thumb_text);
+    if(Plymouth.GetMode() == "boot") {
+        global.thumb_text = create_text("Loading level", 0.5, 0.5 - 6 * text_height_adj());
+        global.state_text = create_text(message, 0.5, 0.5 - 1 * text_height_adj());
+    } else {
+        global.state_text = create_text(message, 0.5, 0.5 - 3 * text_height_adj());
+    }
+}
+
 Plymouth.SetDisplayNormalFunction(display_normal_callback);
 Plymouth.SetDisplayPasswordFunction(display_password_callback);
 Plymouth.SetQuitFunction(quit_callback);
@@ -213,21 +241,7 @@ if (Plymouth.GetMode() == "boot" || Plymouth.GetMode() == "updates" || Plymouth.
 	progress_bar.sprite.SetPosition(progress_bar.x, progress_bar.y, 2);
 	progress_bar.sprite.SetOpacity(1);
 
-	message = "This animation has bugged!";
-	if(Plymouth.GetMode() == "boot")
-		message = "Booting OS";
-	else if(Plymouth.GetMode() == "updates")
-		message = "Updating";
-	else if(Plymouth.GetMode() == "system-upgrade")
-		message = "Upgrading system";
-	else if(Plymouth.GetMode() == "firmware-upgrade") {
-		message = "Upgrading system firmware";
-		warning = create_text_color("DO NOT POWER OFF SYSTEM!", 0.5, 0.5+text_height_adj(), 1, 0, 0); 
-	} else if(Plymouth.GetMode() == "system-reset") {
-		message = "Deleting world";
-        }
-
-	text = create_text(message, 0.5, 0.5 - text_height_adj()); 
+	update_top_text();
 
 	fun progress_callback(duration, progress) {
 		if(global.status != "password") {
@@ -237,7 +251,8 @@ if (Plymouth.GetMode() == "boot" || Plymouth.GetMode() == "updates" || Plymouth.
 	}
 
 	fun update_status_callback(text) {
-		delete_text(global.status_message);
+	    update_top_text();
+	    delete_text(global.status_message);
 		global.status_message = create_text(text, 0.5, 1 - 2.5*text_height_adj());
 	}
 
