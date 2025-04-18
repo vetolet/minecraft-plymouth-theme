@@ -238,7 +238,7 @@ if (Plymouth.GetMode() == "boot" || Plymouth.GetMode() == "updates" || Plymouth.
 
 	fun update_status_callback(text) {
 		delete_text(global.status_message);
-		global.status_message = create_text(text, 0.5, 0.5 + 2.5*text_height_adj()); 
+		global.status_message = create_text(text, 0.5, 1 - 2.5*text_height_adj());
 	}
 
 	Plymouth.SetUpdateStatusFunction(update_status_callback);
